@@ -1,8 +1,6 @@
 // API Configuration
 export const API_CONFIG = {
-  CHATBOT_API_URL:
-    process.env.NEXT_PUBLIC_CHATBOT_API_URL ||
-    "http://124.109.47.238:8079/query_response",
+  CHATBOT_API_URL: process.env.NEXT_PUBLIC_CHATBOT_API_URL || "/api/chatbot",
   CHATBOT_API_TIMEOUT: parseInt(
     process.env.NEXT_PUBLIC_CHATBOT_API_TIMEOUT || "10000"
   ),
@@ -16,13 +14,19 @@ export interface ChatbotRequest {
 }
 
 export interface ChatbotResponse {
+  user_id: string;
   response: string;
-  related_documents?: Array<{
-    documentId: string;
-    documentName: string;
-    downloadUrl: string;
-  }>;
+  lead_flag: boolean;
+  doc_urls: string[] | null;
   error?: string;
+}
+
+export interface LeadFormData {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
 }
 
 class ChatbotService {
@@ -81,18 +85,11 @@ class ChatbotService {
 
       const data = await response.json();
 
-      // Map API response to match our types
-      const relatedDocs = (data.related_documents || data.documents || []).map(
-        (doc: any) => ({
-          documentId: doc.document_id || doc.id,
-          documentName: doc.document_name || doc.name,
-          downloadUrl: doc.download_url || doc.url,
-        })
-      );
-
       return {
-        response: data.response || data.answer || "No response received",
-        related_documents: relatedDocs,
+        user_id: data.user_id || "",
+        response: data.response || "No response received",
+        lead_flag: data.lead_flag || false,
+        doc_urls: data.doc_urls || null,
       };
     } catch (error) {
       console.error("Chatbot query failed:", error);
@@ -105,6 +102,34 @@ class ChatbotService {
       }
 
       throw new Error("An unexpected error occurred");
+    }
+  }
+
+  /**
+   * Submit lead form data
+   */
+  async submitLead(
+    leadData: LeadFormData
+  ): Promise<{ success: boolean; message?: string }> {
+    try {
+      const response = await fetch("/api/lead", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(leadData),
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to submit lead: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return { success: true, message: data.message };
+    } catch (error) {
+      console.error("Lead submission failed:", error);
+      throw error;
     }
   }
 }

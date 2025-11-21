@@ -33,7 +33,11 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
-  relatedDocuments?: DocumentReference[];
+  docUrls?: string[] | null;
+  leadFlag?: boolean;
+  userId?: string;
+  error?: boolean;
+  isTyping?: boolean;
 }
 
 export interface DocumentReference {

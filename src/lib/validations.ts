@@ -43,3 +43,36 @@ export const searchDocumentsSchema = z.object({
 });
 
 export type SearchDocumentsFormData = z.infer<typeof searchDocumentsSchema>;
+
+// Lead Form Validation
+export const leadFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must not exceed 100 characters")
+    .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address")
+    .max(100, "Email must not exceed 100 characters"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(/^[\d\s\-\+\(\)]+$/, "Please enter a valid phone number")
+    .min(10, "Phone number must be at least 10 digits")
+    .max(20, "Phone number must not exceed 20 characters"),
+  subject: z
+    .string()
+    .min(1, "Subject is required")
+    .min(3, "Subject must be at least 3 characters")
+    .max(200, "Subject must not exceed 200 characters"),
+  message: z
+    .string()
+    .min(1, "Message is required")
+    .min(10, "Message must be at least 10 characters")
+    .max(1000, "Message must not exceed 1000 characters"),
+});
+
+export type LeadFormData = z.infer<typeof leadFormSchema>;
