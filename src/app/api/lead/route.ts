@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const LEAD_API_URL = "http://192.168.121.4:8080/generate_lead";
+const LEAD_API_URL =
+  process.env.LEAD_API_URL || "http://192.168.121.4:8080/generate_lead";
 
 export async function POST(request: NextRequest) {
   try {

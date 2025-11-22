@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL = "http://192.168.121.4:8080";
-const OLD_BACKEND_URL = "http://192.168.121.4:6000";
+const BACKEND_URL = process.env.BACKEND_BASE_URL || "http://192.168.121.4:8080";
+const OLD_BACKEND_URL =
+  process.env.OLD_BACKEND_URL || "http://192.168.121.4:6000";
 
 export async function GET(request: NextRequest) {
   try {

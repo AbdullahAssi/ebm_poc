@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
 import {
   HiMenu,
   HiChatAlt2,
@@ -138,6 +139,13 @@ export default function ChatArea({
     setMessages((prev) => [...prev, userMessage]);
     const queryText = input;
     setInput("");
+
+    // Reset textarea height
+    const textarea = document.querySelector("textarea");
+    if (textarea) {
+      textarea.style.height = "auto";
+    }
+
     setIsLoading(true);
 
     try {
@@ -186,35 +194,57 @@ export default function ChatArea({
     <div className="flex-1 flex flex-col h-screen w-full">
       {/* Header */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#212121]">
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors lg:hidden"
-          aria-label="Toggle sidebar"
-        >
-          <HiMenu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-        </button>
-        {!isSidebarOpen && (
+        {/* Left Side - Menu Button & Smart Assist Title */}
+        <div className="flex items-center gap-3">
           <button
             onClick={onToggleSidebar}
-            className="hidden lg:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Open sidebar"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors lg:hidden"
+            aria-label="Toggle sidebar"
           >
             <HiMenu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
           </button>
-        )}
-        <div className="flex-1 text-center">
+          {!isSidebarOpen && (
+            <button
+              onClick={onToggleSidebar}
+              className="hidden lg:block p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Open sidebar"
+            >
+              <HiMenu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            </button>
+          )}
           <h1 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             Smart Assist
           </h1>
         </div>
-        <div className="w-9"></div>
+
+        {/* Right Side - Logo */}
+        <div className="flex items-center md:mr-10">
+          {/* Light Mode Logo */}
+          <Image
+            src="/logolight.png"
+            alt="Logo"
+            width={120}
+            height={40}
+            className="h-8 sm:h-10 w-auto dark:hidden"
+            priority
+          />
+          {/* Dark Mode Logo */}
+          <Image
+            src="/logodark.png"
+            alt="Logo"
+            width={120}
+            height={40}
+            className="h-8 sm:h-10 w-auto hidden dark:block"
+            priority
+          />
+        </div>
       </div>
 
       {/* Connection Status */}
       {/* <ConnectionStatus /> */}
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 bg-white dark:bg-[#212121]">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 bg-white dark:bg-[#212121] scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-4">
@@ -253,7 +283,7 @@ export default function ChatArea({
                       )}
                     </div>
                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Assistant
+                      Smart Assist
                     </span>
                   </div>
                 )}
@@ -269,9 +299,13 @@ export default function ChatArea({
                   </div>
                 )}
 
-                <div className="flex flex-col gap-3 w-full max-w-full sm:max-w-[85%] md:max-w-[80%]">
+                <div
+                  className={`flex flex-col gap-3 w-full max-w-full sm:max-w-[85%] md:max-w-[80%] ${
+                    message.role === "user" ? "items-end" : ""
+                  }`}
+                >
                   <div
-                    className={`rounded-2xl px-3 sm:px-4 py-2 sm:py-3 ${
+                    className={`rounded-lg px-3 sm:px-4 py-2 sm:py-3 max-w-fit ${
                       message.role === "user"
                         ? "bg-blue-600 text-white"
                         : message.error
@@ -331,11 +365,12 @@ export default function ChatArea({
                                     <a
                                       href={proxyUrl}
                                       target="_blank"
+                                      download
                                       rel="noopener noreferrer"
                                       className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-xs font-medium"
                                     >
                                       <HiDownload className="w-3.5 h-3.5" />
-                                      Open
+                                      Download
                                     </a>
                                   </div>
                                 </div>
@@ -368,7 +403,7 @@ export default function ChatArea({
                     <HiLightBulb className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                   </div>
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                    Assistant
+                    Smart Assist
                   </span>
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 sm:px-5 py-3 sm:py-4">
@@ -407,7 +442,12 @@ export default function ChatArea({
               </button> */}
               <textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  // Auto-resize textarea
+                  e.target.style.height = "auto";
+                  e.target.style.height = e.target.scrollHeight + "px";
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -415,7 +455,7 @@ export default function ChatArea({
                   }
                 }}
                 placeholder="Type your message..."
-                className="flex-1 bg-transparent px-3 sm:px-4 py-2 sm:py-3 outline-none resize-none text-sm sm:text-base text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 max-h-32"
+                className="flex-1 bg-transparent  px-3 sm:px-4 py-2 sm:py-3 outline-none resize-none text-sm sm:text-base text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 max-h-32 overflow-y-auto"
                 rows={1}
                 disabled={isLoading}
               />
@@ -429,8 +469,8 @@ export default function ChatArea({
               </button>
             </div>
             <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-2 hidden sm:block">
-              Press Enter to send, Shift + Enter for new line • Click{" "}
-              <HiUpload className="inline w-3 h-3" /> to upload documents
+              Press Enter to send, Shift + Enter for new line •
+              {/* <HiUpload className="inline w-3 h-3" /> to upload documents */}
             </p>
           </form>
 
