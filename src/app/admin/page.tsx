@@ -80,8 +80,8 @@ export default function AdminPage() {
           <FileUpload
             onUploadSuccess={handleUploadSuccess}
             allowMultiple={true}
-            maxSizeMB={15}
-            acceptedFileTypes=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.ppt,.pptx"
+            maxSizeMB={90}
+            acceptedFileTypes=".pdf,.doc,.docx,.txt,.ppt,.pptx"
           />
         </div>
 

@@ -26,8 +26,8 @@ interface FileUploadProps {
 export function FileUpload({
   onUploadSuccess,
   onClose,
-  acceptedFileTypes = ".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls",
-  maxSizeMB = 10,
+  acceptedFileTypes = ".pdf,.doc,.docx,.txt,.ppt,.pptx",
+  maxSizeMB = 100,
   allowMultiple = true,
 }: FileUploadProps) {
   const [selectedFiles, setSelectedFiles] = useState<FileWithDescription[]>([]);
@@ -310,10 +310,7 @@ export function FileUpload({
                 Drag and drop files here
               </p>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                {allowMultiple
-                  ? "Multiple files supported"
-                  : "Single file only"}{" "}
-                • Max {maxSizeMB}MB per file
+                    Max {maxSizeMB}MB per file ({acceptedFileTypes})
               </p>
               <button
                 type="button"

@@ -26,15 +26,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No files provided" }, { status: 400 });
     }
 
-    // Validate file sizes (e.g., max 15MB per file)
-    const maxSize = 15 * 1024 * 1024; // 15MB
+    // Allowed file types
+    const allowedExtensions = [
+      ".pdf",
+      ".doc",
+      ".docx",
+      ".txt",
+      ".ppt",
+      ".pptx",
+    ];
+    const allowedMimeTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
+      "application/vnd.ms-powerpoint",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ];
+
+    // Validate file types
+    for (const file of files) {
+      const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
+      const isValidExtension = allowedExtensions.includes(fileExtension);
+      const isValidMimeType = allowedMimeTypes.includes(file.type);
+
+      if (!isValidExtension && !isValidMimeType) {
+        console.error(
+          `ERROR: File ${file.name} has unsupported format. Extension: ${fileExtension}, MIME: ${file.type}`
+        );
+        return NextResponse.json(
+          {
+            error: `File format not supported: ${file.name}. Allowed formats: PDF, DOC, DOCX, TXT, PPT, PPTX`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate file sizes (e.g., max 100MB per file)
+    const maxSize = 100 * 1024 * 1024; // 100MB
     for (const file of files) {
       if (file.size > maxSize) {
         console.error(
-          `ERROR: File ${file.name} exceeds 15MB limit (${file.size} bytes)`
+          `ERROR: File ${file.name} exceeds 100MB limit (${file.size} bytes)`
         );
         return NextResponse.json(
-          { error: `File ${file.name} exceeds 15MB limit` },
+          { error: `File ${file.name} exceeds 100MB limit` },
           { status: 400 }
         );
       }

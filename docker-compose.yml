@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  ebm-frontend:
+    build: .
+    container_name: ebm-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - BACKEND_BASE_URL=http://192.168.121.4:8080
+      - UPLOAD_API_URL=http://127.0.0.1:8000
+      - CHATBOT_API_URL=http://192.168.121.4:8080/query_response
+      - LEAD_API_URL=http://192.168.121.4:8080/generate_lead
+      - OLD_BACKEND_URL=http://192.168.121.4:6000
+    networks:
+      - ebm-network
+
+networks:
+  ebm-network:
+    driver: bridge

@@ -152,26 +152,23 @@ export default function ChatArea({
       // Call actual chatbot API
       const response = await chatbotService.sendQuery(queryText);
 
-      const messageId = Date.now() + 1;
       const assistantMessage: Message = {
-        id: messageId,
+        id: Date.now() + 1,
         role: "assistant",
-        content: "",
+        content: response.response,
         timestamp: new Date(),
         userId: response.user_id,
-        isTyping: true,
+        docUrls: response.doc_urls,
+        leadFlag: response.lead_flag,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
       setIsLoading(false);
 
-      // Animate typing effect
-      animateTyping(
-        response.response,
-        messageId,
-        response.doc_urls,
-        response.lead_flag
-      );
+      // Show lead form if lead_flag is true
+      if (response.lead_flag) {
+        setShowLeadForm(true);
+      }
     } catch (error) {
       // Handle error - no typing animation for errors
       const errorMessage: Message = {
@@ -315,9 +312,6 @@ export default function ChatArea({
                   >
                     <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">
                       {message.content}
-                      {message.isTyping && (
-                        <span className="inline-block w-0.5 sm:w-1 h-3 sm:h-4 ml-1 bg-blue-500 animate-pulse" />
-                      )}
                     </p>
                   </div>
 
@@ -383,7 +377,7 @@ export default function ChatArea({
                   )}
 
                   {/* Inline Lead Form */}
-                  {message.leadFlag && !message.isTyping && showLeadForm && (
+                  {message.leadFlag && showLeadForm && (
                     <div className="w-full">
                       <LeadForm
                         onClose={() => setShowLeadForm(false)}
