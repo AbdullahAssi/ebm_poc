@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import { HiUpload, HiX, HiDocument, HiCheckCircle } from "react-icons/hi";
-
-interface UploadedFile {
-  id: string;
-  originalName: string;
-  documentName: string;
-  description: string;
-  type: string;
-  size: number;
-  uploadDate: Date;
-}
+import {
+  ACCEPTED_FILE_TYPES,
+  ACCEPTED_FILE_EXTENSIONS,
+  MAX_FILE_SIZE,
+  uploadDocumentSchema,
+  type UploadDocumentFormData,
+} from "@/lib/validations";
+import type { UploadedFile } from "@/lib/types";
 
 export default function AdminPanel() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -20,34 +18,73 @@ export default function AdminPanel() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{
+    documentName?: string;
+    description?: string;
+    file?: string;
+  }>({});
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Accept only PDF and PPTX
-      const validTypes = [
-        "application/pdf",
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        "application/vnd.ms-powerpoint",
-      ];
-      if (
-        validTypes.includes(file.type) ||
-        file.name.endsWith(".pdf") ||
-        file.name.endsWith(".pptx")
-      ) {
-        setSelectedFile(file);
-        // Pre-fill document name from filename
-        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-        setDocumentName(nameWithoutExt);
-      } else {
+      // Validate file type
+      const isValidType =
+        ACCEPTED_FILE_TYPES.includes(file.type) ||
+        ACCEPTED_FILE_EXTENSIONS.some((ext) =>
+          file.name.toLowerCase().endsWith(ext)
+        );
+
+      if (!isValidType) {
         alert("Please select only PDF or PPTX files");
+        return;
       }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`File size must be less than ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
+        return;
+      }
+
+      setSelectedFile(file);
+      // Pre-fill document name from filename
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+      setDocumentName(nameWithoutExt);
+
+      // Clear previous errors
+      setValidationErrors({});
     }
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !documentName.trim()) {
-      alert("Please select a file and provide a document name");
+    if (!selectedFile) {
+      alert("Please select a file");
+      return;
+    }
+
+    // Validate using Zod schema
+    try {
+      const formData: UploadDocumentFormData = {
+        documentName: documentName,
+        description: description || undefined,
+        file: selectedFile,
+      };
+
+      uploadDocumentSchema.parse(formData);
+
+      // Clear any previous validation errors
+      setValidationErrors({});
+    } catch (error) {
+      if (error instanceof Error && "errors" in error) {
+        const zodError = error as any;
+        const errors: Record<string, string> = {};
+        zodError.errors?.forEach((err: any) => {
+          const path = err.path[0];
+          errors[path] = err.message;
+        });
+        setValidationErrors(errors);
+        return;
+      }
+      alert("Validation failed. Please check your input.");
       return;
     }
 
@@ -73,6 +110,7 @@ export default function AdminPanel() {
       setSelectedFile(null);
       setDocumentName("");
       setDescription("");
+      setValidationErrors({});
 
       setTimeout(() => setShowSuccess(false), 3000);
     }, 2000);
@@ -169,10 +207,27 @@ export default function AdminPanel() {
                 <input
                   type="text"
                   value={documentName}
-                  onChange={(e) => setDocumentName(e.target.value)}
+                  onChange={(e) => {
+                    setDocumentName(e.target.value);
+                    if (validationErrors.documentName) {
+                      setValidationErrors({
+                        ...validationErrors,
+                        documentName: undefined,
+                      });
+                    }
+                  }}
                   placeholder="e.g., Product Orientation 2024"
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none ${
+                    validationErrors.documentName
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-700"
+                  }`}
                 />
+                {validationErrors.documentName && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {validationErrors.documentName}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -181,11 +236,28 @@ export default function AdminPanel() {
                 </label>
                 <textarea
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    if (validationErrors.description) {
+                      setValidationErrors({
+                        ...validationErrors,
+                        description: undefined,
+                      });
+                    }
+                  }}
                   placeholder="Brief description of the document content..."
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                  className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none ${
+                    validationErrors.description
+                      ? "border-red-500"
+                      : "border-gray-300 dark:border-gray-700"
+                  }`}
                 />
+                {validationErrors.description && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {validationErrors.description}
+                  </p>
+                )}
               </div>
 
               {/* Upload Button */}

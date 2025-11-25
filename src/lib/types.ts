@@ -14,6 +14,17 @@ export interface Document {
   uploadedBy?: string;
 }
 
+
+export interface UploadedFile {
+  id: string;
+  originalName: string;
+  documentName: string;
+  description: string;
+  type: string;
+  size: number;
+  uploadDate: Date;
+}
+
 // Upload Types
 export interface UploadDocumentRequest {
   file: File;
@@ -29,7 +40,7 @@ export interface UploadDocumentResponse {
 
 // Chat Types
 export interface Message {
-  id: string;
+  id: number;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;

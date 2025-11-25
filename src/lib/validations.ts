@@ -1,11 +1,12 @@
 import { z } from "zod";
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-const ACCEPTED_FILE_TYPES = [
+export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+export const ACCEPTED_FILE_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   "application/vnd.ms-powerpoint",
 ];
+export const ACCEPTED_FILE_EXTENSIONS = [".pdf", ".pptx", ".ppt"];
 
 export const uploadDocumentSchema = z.object({
   documentName: z
@@ -76,3 +77,91 @@ export const leadFormSchema = z.object({
 });
 
 export type LeadFormData = z.infer<typeof leadFormSchema>;
+
+/**
+ * Format bot response with markdown and clickable links
+ * Converts URLs, markdown formatting, and lists to HTML
+ * @param text - Raw text from bot response
+ * @returns Formatted HTML string
+ */
+export const formatBotResponse = (text: string): string => {
+  if (!text) return "";
+
+  // Ensure text is a string
+  if (typeof text !== "string") {
+    console.warn(
+      "formatBotResponse received non-string input:",
+      typeof text,
+      text
+    );
+    text = String(text);
+  }
+
+  // First, convert URLs to clickable hyperlinks (before any other HTML processing)
+  let formatted = text
+    .split(/(\s+)/)
+    .map((part) => {
+      // Check if this part looks like a URL (http://, https://, or www.) and doesn't contain HTML
+      const httpPattern = /^https?:\/\/[^\s<>"']+/;
+      const wwwPattern = /^www\.[^\s<>"']+/;
+
+      if (
+        (httpPattern.test(part) || wwwPattern.test(part)) &&
+        !part.includes("<") &&
+        !part.includes(">")
+      ) {
+        // Remove any trailing punctuation that might be part of the sentence
+        const cleanUrl = part.replace(/[.,;!?]+$/, "");
+        const trailingPunc = part.substring(cleanUrl.length);
+
+        // Add protocol if missing (for www. URLs)
+        const fullUrl = cleanUrl.startsWith("www.")
+          ? `https://${cleanUrl}`
+          : cleanUrl;
+
+        // Create display text
+        let displayText = cleanUrl;
+        if (cleanUrl.length > 50) {
+          displayText = cleanUrl.substring(0, 47) + "...";
+        }
+
+        return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline font-medium">${displayText}</a>${trailingPunc}`;
+      }
+      return part;
+    })
+    .join("");
+
+  // Then apply markdown-style formatting to HTML
+  formatted = formatted
+    // Convert **bold** to <strong>
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    // Convert *italic* to <em>
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    // Convert bullet points (*, -, +) to proper HTML lists
+    .replace(/^\s*[\*\-\+]\s+(.+)$/gm, "<li>$1</li>")
+    // Convert numbered lists (1., 2., etc.)
+    .replace(/^\s*\d+\.\s+(.+)$/gm, "<li>$1</li>")
+    // Convert line breaks to <br>
+    .replace(/\n/g, "<br>")
+    // Convert double breaks to paragraph spacing
+    .replace(/<br><br>/g, "</p><p>");
+
+  // Wrap consecutive <li> elements in <ul>
+  formatted = formatted.replace(
+    /(<li>.*?<\/li>)(\s*<li>.*?<\/li>)*/g,
+    function (match) {
+      return (
+        '<ul class="list-disc list-inside space-y-1 my-2">' + match + "</ul>"
+      );
+    }
+  );
+
+  // Wrap in paragraph tags if not already wrapped
+  if (!formatted.includes("<p>") && !formatted.includes("<ul>")) {
+    formatted = "<p>" + formatted + "</p>";
+  } else if (formatted.includes("<p>")) {
+    formatted = "<p>" + formatted + "</p>";
+  }
+
+  return formatted;
+};

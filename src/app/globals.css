@@ -98,3 +98,57 @@ button {
 .dark .scrollbar-thin {
   scrollbar-color: #4b5563 transparent;
 }
+
+/* Bot message formatting styles */
+.prose {
+  max-width: none;
+}
+
+.prose p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: inherit;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+
+.prose a {
+  color: #2563eb; /* blue-600 */
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.prose a:hover {
+  text-decoration: underline;
+  color: #1d4ed8; /* blue-700 */
+}
+
+/* Dark mode prose styles */
+.dark .prose a {
+  color: #60a5fa; /* blue-400 */
+}
+
+.dark .prose a:hover {
+  color: #93c5fd; /* blue-300 */
+}
+
+.dark .prose strong {
+  color: inherit;
+}

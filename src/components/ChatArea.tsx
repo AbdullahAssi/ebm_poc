@@ -16,6 +16,8 @@ import {
   HiUpload,
 } from "react-icons/hi";
 import { chatbotService } from "@/lib/api/chatbot";
+import { formatBotResponse } from "@/lib/validations";
+import { Message } from "@/lib/types";
 import { ConnectionStatus } from "@/components/chat/connection-status";
 import { LeadForm } from "@/components/chat/lead-form";
 import { FileUpload } from "@/components/chat/file-upload";
@@ -23,18 +25,6 @@ import { FileUpload } from "@/components/chat/file-upload";
 interface ChatAreaProps {
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
-}
-
-interface Message {
-  id: number;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  docUrls?: string[] | null;
-  leadFlag?: boolean;
-  userId?: string;
-  error?: boolean;
-  isTyping?: boolean;
 }
 
 export default function ChatArea({
@@ -170,14 +160,74 @@ export default function ChatArea({
         setShowLeadForm(true);
       }
     } catch (error) {
-      // Handle error - no typing animation for errors
+      // Generate helpful error message based on error type and user query
+      let errorContent = "";
+      const errorObj = error instanceof Error ? error : null;
+      const lowerQuery = queryText.toLowerCase();
+
+      // Contact information
+      const contactInfo = `\n\n📞 **Direct Contact:**\nPhone: +051-8778770\nEmail: info@cymax.com.pk`;
+
+      // Determine error type and provide specific guidance
+      if (errorObj?.message.includes("timeout")) {
+        errorContent =
+          "⏰ The server is taking longer than usual to respond. Please try again or contact us directly for immediate assistance." +
+          contactInfo;
+      } else if (
+        errorObj?.message.includes("Network") ||
+        errorObj?.message.includes("Failed to fetch")
+      ) {
+        errorContent =
+          "🌐 Unable to connect to our AI assistant. Please check your internet connection or contact us directly." +
+          contactInfo;
+      } else if (errorObj?.message.includes("500")) {
+        errorContent =
+          "⚠️ Our AI assistant is temporarily unavailable. For immediate assistance, please contact us directly." +
+          contactInfo;
+      } else {
+        // Provide context-aware fallback based on user query
+        if (
+          lowerQuery.includes("hello") ||
+          lowerQuery.includes("hi") ||
+          lowerQuery.includes("hey") ||
+          lowerQuery.includes("greetings")
+        ) {
+          errorContent = `Hello! I'm having trouble connecting to our AI assistant right now, but I'm here to help.\n\n⚠️ Our AI assistant is temporarily unavailable. For immediate assistance, please contact us directly.${contactInfo}`;
+        } else if (
+          lowerQuery.includes("contact") ||
+          lowerQuery.includes("phone") ||
+          lowerQuery.includes("email") ||
+          lowerQuery.includes("reach")
+        ) {
+          errorContent = `📞 **Contact Information:**\nPhone: +051-8778770\nEmail: info@cymax.com.pk\nAddress: CyMax Technologies\n\nFeel free to reach out through any of these channels. We're here to help!`;
+        } else if (
+          lowerQuery.includes("product") ||
+          lowerQuery.includes("solution") ||
+          lowerQuery.includes("service") ||
+          lowerQuery.includes("offer")
+        ) {
+          errorContent = `🚀 CyMax Technologies specializes in AI, Cybersecurity, ICT, and ERP solutions.\n\n⚠️ Our AI assistant is temporarily unavailable, but you can learn more about our offerings by contacting our sales team directly.${contactInfo}`;
+        } else if (
+          lowerQuery.includes("price") ||
+          lowerQuery.includes("cost") ||
+          lowerQuery.includes("quote")
+        ) {
+          errorContent = `💰 For pricing information and custom quotes, please contact our sales team directly.${contactInfo}\n\nWe'll be happy to discuss your requirements and provide a tailored solution.`;
+        } else if (
+          lowerQuery.includes("demo") ||
+          lowerQuery.includes("trial") ||
+          lowerQuery.includes("presentation")
+        ) {
+          errorContent = `🎯 We'd love to show you a demo of our solutions!\n\n⚠️ Our AI assistant is temporarily unavailable. Please contact us directly to schedule a demonstration.${contactInfo}`;
+        } else {
+          errorContent = `⚠️ Our AI assistant is temporarily unavailable. For immediate assistance, please contact us directly.${contactInfo}`;
+        }
+      }
+
       const errorMessage: Message = {
         id: Date.now() + 1,
         role: "assistant",
-        content:
-          error instanceof Error
-            ? error.message
-            : "Failed to get response. Please try again.",
+        content: errorContent,
         timestamp: new Date(),
         error: true,
       };
@@ -310,9 +360,18 @@ export default function ChatArea({
                         : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
                     }`}
                   >
-                    <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">
-                      {message.content}
-                    </p>
+                    {message.role === "user" ? (
+                      <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">
+                        {message.content}
+                      </p>
+                    ) : (
+                      <div
+                        className="text-xs sm:text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{
+                          __html: formatBotResponse(message.content),
+                        }}
+                      />
+                    )}
                   </div>
 
                   {/* Document URLs Preview */}
