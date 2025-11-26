@@ -259,6 +259,24 @@ export default function ChatArea({
               <HiMenu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
           )}
+          {/* SA Logo for Light Mode */}
+          <Image
+            src="/salogo.png"
+            alt="Smart Assist"
+            width={32}
+            height={32}
+            className="w-6 h-6 sm:w-8 sm:h-8 dark:hidden"
+            priority
+          />
+          {/* SA Logo for Dark Mode */}
+          <Image
+            src="/salogowithoutbg.png"
+            alt="Smart Assist"
+            width={32}
+            height={32}
+            className="w-6 h-6 sm:w-8 sm:h-8 hidden dark:block"
+            priority
+          />
           <h1 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
             Smart Assist
           </h1>

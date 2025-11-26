@@ -13,8 +13,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EBM ORIENTATION CHATBOT",
-  description: "EBM CHATBOT ",
+  title: "Smart Assist",
+  description: "Smart Assist Chatbot",
+  icons: {
+    icon: [
+      {
+        url: "/salogo.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/salogowithoutbg.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({

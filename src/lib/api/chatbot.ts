@@ -32,10 +32,27 @@ export interface LeadFormData {
 class ChatbotService {
   private apiUrl: string;
   private config: typeof API_CONFIG;
+  private readonly USER_ID_KEY = "chatbot_user_id";
 
   constructor() {
     this.apiUrl = API_CONFIG.CHATBOT_API_URL;
     this.config = API_CONFIG;
+  }
+
+  /**
+   * Get user ID from localStorage
+   */
+  private getUserId(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem(this.USER_ID_KEY);
+  }
+
+  /**
+   * Save user ID to localStorage
+   */
+  private saveUserId(userId: string): void {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(this.USER_ID_KEY, userId);
   }
 
   /**
@@ -68,6 +85,11 @@ class ChatbotService {
    */
   async sendQuery(query: string): Promise<ChatbotResponse> {
     try {
+      console.log("Sending query to chatbot:", query);
+
+      // Get existing user ID from localStorage or null for first-time users
+      const userId = this.getUserId();
+
       const response = await fetch(this.apiUrl, {
         method: "POST",
         headers: {
@@ -75,6 +97,7 @@ class ChatbotService {
         },
         body: JSON.stringify({
           user_query: query,
+          user_id: userId,
         }),
         signal: AbortSignal.timeout(this.config.CHATBOT_API_TIMEOUT || 10000),
       });
@@ -84,6 +107,12 @@ class ChatbotService {
       }
 
       const data = await response.json();
+      console.log("Chatbot response data:", data);
+
+      // Save user ID from response to localStorage for future requests
+      if (data.user_id) {
+        this.saveUserId(data.user_id);
+      }
 
       return {
         user_id: data.user_id || "",
